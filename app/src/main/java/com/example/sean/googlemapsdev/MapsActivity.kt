@@ -17,7 +17,12 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
-
+/*
+A few useful links
+https://developers.google.com/maps/documentation/android-sdk/current-place-tutorial
+https://www.raywenderlich.com/230-introduction-to-google-maps-api-for-android-with-kotlin
+https://github.com/googlemaps/android-samples/blob/master/tutorials/CurrentPlaceDetailsOnMap/app/src/main/java/com/example/currentplacedetailsonmap/MapsActivityCurrentPlace.java
+ */
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -46,6 +51,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        //Key is required to be gotten from google apis - checkout the google_maps_api.xml file in this
     }
 
     /**
@@ -79,9 +86,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         getLocationPermission()
 
         //2 Turn on the My Location layer and the related control on the map.
+        //i.e. go to my location
         updateLocationUI()
 
-        //3
+        //3 - check and see if fine location is enabled then attempt to get the last known position
         getDeviceLocation()
     }
 
