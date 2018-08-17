@@ -2,13 +2,17 @@ package com.example.sean.googlemapsdev
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.widget.Toast
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -16,6 +20,8 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import java.io.IOException
+import java.util.*
 
 /*
 A few useful links
@@ -27,6 +33,7 @@ https://github.com/googlemaps/android-samples/blob/master/tutorials/CurrentPlace
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
+    private val TAG = "MapsActivity"
 
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
@@ -39,8 +46,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val mDefaultLocation = LatLng(-33.8523341, 151.2106085)
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private var mLocationPermissionGranted: Boolean = false
-
     private lateinit var lastLocation: Location
+
+    lateinit var geofencingClient: GeofencingClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +59,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        //To access the location APIs, you need to create an instance of the Geofencing client
+        geofencingClient = LocationServices.getGeofencingClient(this)
 
         //Key is required to be gotten from google apis - checkout the google_maps_api.xml file in this
     }
@@ -152,6 +163,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     lastLocation = location
                     val currentLatLng = LatLng(location.latitude, location.longitude)
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM))
+
+                    requestCurrentCountry()
                 }
             }
         }
@@ -184,6 +197,49 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         catch(e : SecurityException)
         {
             Log.e("Exception: %s", e.message)
+        }
+    }
+
+    /**
+     * request and display the current country location as a toast message!
+     */
+    private fun requestCurrentCountry()
+    {
+        Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        var addresses: List<Address> = emptyList()
+
+        try {
+
+            val geocoder = Geocoder(this, Locale.getDefault())
+
+            addresses = geocoder.getFromLocation(
+                    lastLocation.latitude,
+                    lastLocation.longitude,
+                    // In this sample, we get just a single address.
+                    1)
+        }
+        catch(ioException: IOException)
+        {
+            // Catch network or other I/O problems.
+            Log.e(TAG, ioException.message)
+        }
+        catch(illegalArgumentException: IllegalArgumentException)
+        {
+            // Catch invalid latitude or longitude values.
+            Log.e(TAG, illegalArgumentException.message)
+        }
+
+        // Handle case where no address was found.
+        if(addresses.isEmpty())
+        {
+            Log.d(TAG, "No Addresses")
+        }
+        else
+        {
+            //get the current address
+            val address = addresses[0]
+            Toast.makeText(this, "Country : ${address.countryName}", Toast.LENGTH_LONG).show()
         }
     }
 
