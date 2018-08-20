@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -78,6 +79,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        mMap.setOnMapClickListener {
+            if(mLocationPermissionGranted)
+                onMapClicked(it)
+        }
+
         mMap.uiSettings.isZoomControlsEnabled = true
 
         //Draw a marker on the map
@@ -86,6 +92,39 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM))
 
         setupMap()
+    }
+
+    /**
+     * Handle on map click event to display the current country location information
+     * @param latLng : nullable latitude and longitude data
+     */
+    private fun onMapClicked(latLng: LatLng?) {
+        Log.d(TAG, object {}.javaClass.enclosingMethod.name)
+
+        val geocoder = Geocoder(this, Locale.getDefault())
+        var addresses: List<Address> = emptyList()
+        try
+        {
+            addresses = geocoder.getFromLocation(
+                    latLng!!.latitude,
+                    latLng!!.longitude,
+                    // In this sample, we get just a single address.
+                    1)
+        }
+        catch(ioException: IOException)
+        {
+            // Catch network or other I/O problems.
+            Log.e(TAG, ioException.message)
+        }
+        catch(illegalArgumentException: IllegalArgumentException)
+        {
+            // Catch invalid latitude or longitude values.
+            Log.e(TAG, illegalArgumentException.message)
+        }
+        if (addresses.isNotEmpty()) {
+            val address = addresses[0]
+            Toast.makeText(this, "Clicked : ${address.countryName}", Toast.LENGTH_LONG).show()
+        }
     }
 
     /**
@@ -181,7 +220,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateLocationUI()
     {
         if (mMap == null) {
-            return;
+            return
         }
         try {
             if (mLocationPermissionGranted) {
@@ -206,6 +245,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun requestCurrentCountry()
     {
         Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        //if permission has not been granted
+        if(!mLocationPermissionGranted)
+        {
+            return
+        }
 
         var addresses: List<Address> = emptyList()
 
@@ -243,8 +288,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    /**
+     * create a geofence, setting the desired radius, duration, and transition types for the geofence
+     */
+    private fun initialiseGeofenceItems()
+    {
+        Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        var geoFenceList : ArrayList<Geofence> = arrayListOf()
+//
+//        geoFenceList.add(Geofence.Builder()
+//                // Set the request ID of the geofence. This is a string to identify this
+//                // geofence.
+//                .setRequestId(entry.key)
+//
+//                // Set the circular region of this geofence.
+//                .setCircularRegion(
+//                        entry.value.latitude,
+//                        entry.value.longitude,
+//                        GEOFENCE_RADIUS_IN_METERS
+//        )
+    }
+
     //static companion object data!!
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+
+        private const val GEOFENCE_RADIUS_IN_METERS = 100
     }
 }
