@@ -79,7 +79,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        mMap.setOnMapClickListener {
+        //set listener for LONG click events!
+        mMap.setOnMapLongClickListener {
             if(mLocationPermissionGranted)
                 onMapClicked(it)
         }
@@ -125,6 +126,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val address = addresses[0]
             Toast.makeText(this, "Clicked : ${address.countryName}", Toast.LENGTH_LONG).show()
         }
+
+        //Now drop the pin/marker on the map!!
+        dropAPin(latLng)
     }
 
     /**
@@ -286,6 +290,78 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val address = addresses[0]
             Toast.makeText(this, "Country : ${address.countryName}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    /**
+     * handle the dropping of a new pin on the map!!
+     * @param latLng
+     */
+    private fun dropAPin(latLng: LatLng?)
+    {
+        Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        if(latLng != null)
+        {
+            mMap.addMarker(MarkerOptions().position(latLng).title(createPinInfoFromLocation(latLng)))
+        }
+    }
+
+    /**
+     * test code
+     */
+    private fun createPinInfoFromLocation(latLng: LatLng?) : String
+    {
+        Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        var result = "Unknown"
+
+        val address =  getAddressFromLatLng(latLng)
+        if(address != null)
+        {
+            result = "Country : ${address.countryName} - Code : ${address.countryCode}"
+        }
+
+        return result
+    }
+
+    /**
+     * test code
+     */
+    private fun getAddressFromLatLng(latLng: LatLng?) : Address
+    {
+        Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
+
+        if(latLng == null)
+        {
+            var addresses: List<Address> = emptyList()
+
+            try {
+
+                val geocoder = Geocoder(this, Locale.getDefault())
+
+                addresses = geocoder.getFromLocation(
+                        latLng!!.latitude,
+                        latLng!!.longitude,
+                        // In this sample, we get just a single address.
+                        1)
+            }
+            catch(ioException: IOException)
+            {
+                // Catch network or other I/O problems.
+                Log.e(TAG, ioException.message)
+            }
+            catch(illegalArgumentException: IllegalArgumentException)
+            {
+                // Catch invalid latitude or longitude values.
+                Log.e(TAG, illegalArgumentException.message)
+            }
+
+            if(addresses.isNotEmpty())
+            {
+                return addresses[0]
+            }
+        }
+        return null!!
     }
 
     /**
