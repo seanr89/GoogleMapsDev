@@ -97,10 +97,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     /**
      * Handle on map click event to display the current country location information
+     * N.B. currently a lengthy operation!
      * @param latLng : nullable latitude and longitude data
      */
     private fun onMapClicked(latLng: LatLng?) {
         Log.d(TAG, object {}.javaClass.enclosingMethod.name)
+
+        //drop the pin/marker on the map!!
+        dropAPin(latLng)
 
         val geocoder = Geocoder(this, Locale.getDefault())
         var addresses: List<Address> = emptyList()
@@ -126,9 +130,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val address = addresses[0]
             Toast.makeText(this, "Clicked : ${address.countryName}", Toast.LENGTH_LONG).show()
         }
-
-        //Now drop the pin/marker on the map!!
-        dropAPin(latLng)
     }
 
     /**
@@ -203,11 +204,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val location = it.result
                 if(location != null)
                 {
+                    //set the last known location and navigate the map over the current position
                     lastLocation = location
                     val currentLatLng = LatLng(location.latitude, location.longitude)
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM))
 
-                    requestCurrentCountry()
+                    //request and display the current country info
+                    requestCurrentCountryAndDisplay()
                 }
             }
         }
@@ -246,7 +249,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     /**
      * request and display the current country location as a toast message!
      */
-    private fun requestCurrentCountry()
+    private fun requestCurrentCountryAndDisplay()
     {
         Log.d(TAG,  object{}.javaClass.enclosingMethod.name)
 
@@ -325,7 +328,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     /**
-     * test code
+     * request the address object from the passed in Lat and Lng params
+     * @param latLng : the latitude and longitude value (nullable)
+     * @return an Address object
      */
     private fun getAddressFromLatLng(latLng: LatLng?) : Address
     {
